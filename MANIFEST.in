@@ -1,0 +1,3 @@
+include omdx/data/hip_main.dat
+include omdx/data/de421.bsp
+include omdx/data/star_common_names.json

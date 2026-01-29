@@ -22,9 +22,12 @@ setup(
         "opencv-python",
         "astropy",
         "pillow",
-        "matplotlib",
         "skyfield",
     ],
+    include_package_data=True,
+    package_data={
+        "omdx": ["data/*.dat", "data/*.bsp", "data/*.json"],
+    },
     entry_points={
         "console_scripts": [
             # 格式: 命令名 = 包名.文件名:函数名

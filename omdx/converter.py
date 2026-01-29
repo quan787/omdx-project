@@ -14,6 +14,12 @@ from PIL import Image, ImageTk
 from datetime import datetime, timedelta
 from astropy.time import Time
 from .observation import MeteorObservation
+from importlib import resources
+
+
+def get_resource_path(package_data, resource_name):
+    return str(resources.files(package_data).joinpath(resource_name))
+
 
 # 尝试引入天文学库
 HAS_SKYFIELD = False
@@ -534,7 +540,11 @@ class ConverterApp:
         self.star_names_map = {}
         self.star_id_to_name = {}
         try:
-            with open("star_common_names.json", "r", encoding="utf-8") as f:
+            with open(
+                get_resource_path("omdx.data", "star_common_names.json"),
+                "r",
+                encoding="utf-8",
+            ) as f:
                 data = json.load(f)
 
                 # 优先加载英文构建反向表
@@ -559,10 +569,10 @@ class ConverterApp:
 
     def _load_sf_thread(self):
         try:
-            with load.open("hip_main.dat") as f:
+            with load.open(get_resource_path("omdx.data", "hip_main.dat")) as f:
                 self.hipparcos_df = hipparcos.load_dataframe(f)
             self.ts = load.timescale()
-            self.planets = load("de421.bsp")
+            self.planets = load(get_resource_path("omdx.data", "de421.bsp"))
             self.earth = self.planets["earth"]
         except Exception as e:
             print(f"Skyfield data load error: {e}")

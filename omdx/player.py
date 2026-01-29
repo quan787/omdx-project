@@ -6,15 +6,17 @@ from tkinter import ttk, filedialog, messagebox
 import tkinter.font as tkfont
 import numpy as np
 from PIL import Image, ImageTk
-import matplotlib
-from matplotlib.figure import Figure
-from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from astropy.time import Time
 import json
 import os
 from .observation import MeteorObservation
+from importlib import resources
 
-matplotlib.use("TkAgg")
+
+def get_resource_path(package_data, resource_name):
+    return str(resources.files(package_data).joinpath(resource_name))
+
+
 # 尝试引入 OpenCV 用于 Debayer
 try:
     import cv2
@@ -132,11 +134,12 @@ class HistogramWindow(tk.Toplevel):
         # 滑块的最大上限，根据数据类型动态调整
         self.slider_limit_max = 255.0
 
-        # 布局
-        self.fig = Figure(figsize=(5, 2.5), dpi=100)
-        self.ax = self.fig.add_subplot(111)
-        self.canvas = FigureCanvasTkAgg(self.fig, master=self)
-        self.canvas.get_tk_widget().pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # 布局 - 使用原生 Canvas 替代 Matplotlib
+        self.canvas_height = 250
+        self.canvas = tk.Canvas(self, bg="white", height=self.canvas_height)
+        self.canvas.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        # 绑定 resize 事件以重绘
+        self.canvas.bind("<Configure>", self.on_resize_canvas)
 
         ctrl_frame = ttk.Frame(self)
         ctrl_frame.pack(side=tk.BOTTOM, fill=tk.X, padx=5, pady=5)
@@ -224,17 +227,80 @@ class HistogramWindow(tk.Toplevel):
             return
 
         self.data_ref = data
-        flat = data.flatten()
-        # 简单下采样以提高直方图绘制速度
+        # 触发一次重绘
+        self.draw_histogram()
+
+    def on_resize_canvas(self, event):
+        """窗口大小改变时重绘"""
+        if self.data_ref is not None:
+            self.draw_histogram()
+
+    def draw_histogram(self):
+        """使用 Canvas 手动绘制直方图"""
+        if self.data_ref is None:
+            return
+
+        # 获取 Canvas 当前尺寸
+        w = self.canvas.winfo_width()
+        h = self.canvas.winfo_height()
+        if w < 10 or h < 10:
+            return
+
+        flat = self.data_ref.flatten()
+        # 简单下采样以提高直方图计算速度
         if len(flat) > 100000:
             flat = np.random.choice(flat, 100000)
 
-        self.ax.clear()
-        self.ax.hist(flat, bins=50, color="gray", log=True)
-        self.ax.set_title("Pixel Intensity Distribution")
-        self.canvas.draw()
+        # 动态范围可能很大，限制一下 bins 数量
+        bins_count = 64
+        counts, bin_edges = np.histogram(flat, bins=bins_count)
 
-        # 注意：这里不再自动重置 vmin/vmax，只绘制图表，以免播放时滑块乱跳
+        # Log 缩放处理
+        counts_log = np.log1p(counts)
+        max_count = np.max(counts_log)
+        if max_count == 0:
+            max_count = 1
+
+        self.canvas.delete("all")
+
+        # 预留底部边距用于显示文字
+        margin_bottom = 20
+        graph_h = h - margin_bottom
+
+        # 绘制背景标题
+        self.canvas.create_text(w / 2, 10, text="直方图 (Log Scale)", fill="#333")
+
+        # 绘制条形图
+        bar_w = w / bins_count
+        for i in range(bins_count):
+            val = counts_log[i]
+            # 高度归一化，基于 graph_h 计算
+            bar_h = (val / max_count) * (graph_h - 20)
+
+            x0 = i * bar_w
+            y0 = graph_h - bar_h
+            x1 = (i + 1) * bar_w
+            y1 = graph_h  # 底部对齐到 graph_h
+
+            self.canvas.create_rectangle(x0, y0, x1, y1, fill="#888888", outline="")
+
+        # === 新增：绘制底部 X 轴范围标注 ===
+        min_val = bin_edges[0]
+        max_val = bin_edges[-1]
+
+        # 左下角显示最小值
+        self.canvas.create_text(
+            2, h, anchor="sw", text=f"{min_val:.1f}", fill="black", font=("Arial", 9)
+        )
+        # 右下角显示最大值
+        self.canvas.create_text(
+            w - 2,
+            h,
+            anchor="se",
+            text=f"{max_val:.1f}",
+            fill="black",
+            font=("Arial", 9),
+        )
 
     def on_close(self):
         self.withdraw()
@@ -328,7 +394,7 @@ class MeteorPlayerApp:
 
     def load_star_common_names(self):
         """从 JSON 加载恒星常用名对照表"""
-        path = "star_common_names.json"
+        path = get_resource_path("omdx.data", "star_common_names.json")
         if os.path.exists(path):
             try:
                 with open(path, "r", encoding="utf-8") as f:
@@ -681,7 +747,8 @@ class MeteorPlayerApp:
             color_corrected = ImageProcessor.debayer_and_color_correct(
                 raw_data, self.obs.color
             )
-
+            if self.show_hist.get():
+                self.hist_window.set_data(color_corrected)
             # 步骤 2b: 色阶映射到 8bit
             img_8bit = ImageProcessor.apply_levels(color_corrected, vmin, vmax, gamma)
 
