@@ -171,7 +171,7 @@ omdx-converter
 
 ### 安装
 
-可以通过 pip 安装（假设已发布）：
+可以通过 pip 安装：
 
 ```bash
 pip install omdx
@@ -180,7 +180,7 @@ pip install omdx
 或者从源码安装：
 
 ```bash
-git clone https://gitee.com/your-repo/omdx-project.git
+git clone https://github.com/quan787/omdx-project.git
 cd omdx-project
 pip install -e .
 ```
