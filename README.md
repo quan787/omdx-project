@@ -48,14 +48,17 @@ _请阅读本项目其他文章：[文档中心](https://blog.meteoroid.fit/)_
 
 该类最关键的属性是 `self.contents` (List[str])。它是一个字符串列表，用于标记当前对象中包含了哪些有效的数据模块。下游程序应根据此属性判断数据的完整性。
 
-| 标记 (`contents`) | 含义             | 必须包含的非空属性                                                                                   |
-| :---------------- | :--------------- | :--------------------------------------------------------------------------------------------------- |
-| `image`           | 包含图像数据     | `data` (视频帧), `mask_frame` (非探测区域遮罩), `signal_frame` (流星区域), `max_frame`, `mean_frame` |
-| `time`            | 包含时间信息     | `mean_time` (基准绝对时间), `frame_time` (每帧相对基准时间),`frame_exposure` (每帧曝光时间)          |
-| `star`            | 包含恒星定标信息 | `star_pixel_coord`, `star_eci_coord`, `star_name`                                                    |
-| `meteor`          | 包含流星测量信息 | `objects` (流星对象列表), `meteor_index`, `meteor_pixel_coord` 等                                    |
-| `calibration`     | 包含相机校准模型 | `calibration_model`, `calibration_residual` 等                                                       |
-| `photometry`      | 包含测光模型     | `photometry_model`, `photometry_residual` 等                                                         |
+| 标记 (`contents`) | 含义               | 必须包含的非空属性                                                                                   |
+| :---------------- | :----------------- | :--------------------------------------------------------------------------------------------------- |
+| `image`           | 包含图像数据       | `data` (视频帧), `mask_frame` (非探测区域遮罩), `signal_frame` (流星区域), `max_frame`, `mean_frame` |
+| `time`            | 包含时间信息       | `mean_time` (基准绝对时间), `frame_time` (每帧相对基准时间),`frame_exposure` (每帧曝光时间)          |
+| `star`            | 包含恒星定标信息   | `star_pixel_coord`, `star_eci_coord`, `star_name`                                                    |
+| `meteor`          | 包含流星测量信息   | `objects` （流星对象列表, 包含`meteor_index`, `meteor_pixel_coord` 等）                              |
+| `calibration`     | 包含相机校准模型   | `calibration_model`, `calibration_residual` 等                                                       |
+| `photometry`      | 包含测光模型       | `photometry_model`, `photometry_residual` 等                                                         |
+| `database`        | 包含数据库收录情况 | `station_id`, `meteor_id` 等                                                                         |
+
+_详细信息请参照[OMDX Python SDK API 参考手册](https://blog.meteoroid.fit/omdx/fits.html)_
 
 ### 保存格式
 
