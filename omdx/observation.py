@@ -9,9 +9,12 @@ from astropy.io import fits
 from astropy.table import Table
 import cv2
 from typing import Optional, List, Dict, Any, Union, Tuple, Type, TypeVar
+from ._version import __version__
 
 # 定义泛型变量，用于类方法的返回类型注解
 T = TypeVar("T", bound="MeteorObservation")
+
+VERSION = __version__
 
 
 class NumpyEncoder(json.JSONEncoder):
@@ -57,7 +60,7 @@ class MeteorObservation:
 
     def __init__(self) -> None:
         # --- 版本信息 ---
-        self.version: str = "0.1"
+        self.version: str = VERSION
 
         # --- 基础信息 ---
         self.station_name: Optional[str] = None  # 站点名称
@@ -480,7 +483,7 @@ class MeteorObservation:
             hdr = primary_hdu.header
 
             # 基础属性
-            obs.version = str(hdr.get("M_VER", "0.1"))
+            obs.version = str(hdr.get("M_VER", VERSION))
             obs.station_name = hdr.get("M_STA")
             obs.camera_name = hdr.get("M_CAM")
             obs.meteor_name = hdr.get("M_NAME")

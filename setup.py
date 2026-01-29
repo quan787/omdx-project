@@ -1,8 +1,17 @@
 from setuptools import setup, find_packages
+import os
+
+# 获取当前 setup.py 所在目录的绝对路径
+here = os.path.abspath(os.path.dirname(__file__))
+about = {}
+# 读取 _version.py 文件内容并执行
+version_path = os.path.join(here, "omdx", "_version.py")
+with open(version_path, "r", encoding="utf-8") as f:
+    exec(f.read(), about)
 
 setup(
     name="omdx",
-    version="0.1.0",  # 每次发布新版本都要修改这里
+    version=about["__version__"],
     author="quan787",
     author_email="quan787@qq.com",
     description="Open Meteor Data Exchange standard and tools",
